@@ -40,7 +40,8 @@ class Store {
   playing = $state(false);
   showOnion = $state(true);
   onionSpacing = $state(6);
-  showElements = $state(true);
+  showElements = $state(false);
+  showGrid = $state(true);
 
   #undo: string[] = [];
   #redo: string[] = [];

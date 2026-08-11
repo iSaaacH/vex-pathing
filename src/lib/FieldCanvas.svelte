@@ -15,7 +15,7 @@
     pxPerInch,
     type View,
   } from '../model/geometry';
-  import { draw, handlesFor, type Handle } from '../render/field';
+  import { draw, handlesFor, loadFieldImage, type Handle } from '../render/field';
   import { hasTarget } from '../model/types';
 
   let canvas: HTMLCanvasElement;
@@ -27,6 +27,7 @@
   let panStart = { x: 0, y: 0, panX: 0, panY: 0 };
   let cursor = $state({ x: 0, y: 0 });
   let snap = $state(false);
+  let imageLoaded = $state(false);
 
   const HIT_PX = 11;
 
@@ -51,6 +52,7 @@
       showOnion: store.showOnion,
       onionSpacing: store.onionSpacing,
       showElements: store.showElements,
+      showGrid: store.showGrid,
       hoverHandle: hover,
     });
   }
@@ -64,9 +66,16 @@
     void store.showOnion;
     void store.onionSpacing;
     void store.showElements;
+    void store.showGrid;
+    void imageLoaded;
     void view;
     void hover;
     render();
+  });
+
+  $effect(() => {
+    // Kick off the background load; the redraw effect re-runs when it lands.
+    loadFieldImage().then(() => (imageLoaded = true));
   });
 
   $effect(() => {

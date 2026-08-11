@@ -225,21 +225,21 @@ export function blankRoutine(): Routine {
 export function demoRoutine(): Routine {
   const r = blankRoutine();
   r.name = 'demo-red-left';
-  r.start = { x: -48, y: -40, theta: 0 };
+  r.start = { x: -36, y: -60, theta: 0 };
   r.segments = [
     {
       id: newId(),
       kind: 'moveToPoint',
-      target: { x: -48, y: 24 },
+      target: { x: -36, y: -36 },
       timeout: 2000,
       params: { ...MOVE_TO_POINT_DEFAULTS },
-      markers: [{ id: newId(), atInches: 40, code: 'intake.move(127);' }],
+      markers: [{ id: newId(), atInches: 16, code: 'intake.move(127);' }],
       chain: { mode: 'chained', minSpeed: 40, earlyExitRange: 4 },
     },
     {
       id: newId(),
       kind: 'moveToPose',
-      target: { x: -24, y: 46, theta: 90 },
+      target: { x: -12, y: -12, theta: 45 },
       timeout: 3000,
       params: { ...MOVE_TO_POSE_DEFAULTS, lead: 0.45 },
       markers: [],
@@ -250,7 +250,7 @@ export function demoRoutine(): Routine {
     {
       id: newId(),
       kind: 'turnToHeading',
-      theta: 0,
+      theta: 90,
       timeout: 1000,
       params: { ...TURN_TO_HEADING_DEFAULTS },
       markers: [],
@@ -259,7 +259,7 @@ export function demoRoutine(): Routine {
     {
       id: newId(),
       kind: 'moveToPoint',
-      target: { x: -56, y: 20 },
+      target: { x: -36, y: -36 },
       timeout: 2500,
       params: { ...MOVE_TO_POINT_DEFAULTS, forwards: false },
       markers: [],

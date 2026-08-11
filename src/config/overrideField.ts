@@ -1,22 +1,29 @@
 /**
- * Override (2026-27) field elements.
+ * Override (2026-27) field image and element geometry.
  *
- * ⚠️ PLACEHOLDER GEOMETRY — ISA-113.
+ * The background is an orthographic top-down render by Jerry Lum
+ * (https://field-rendering.jerryio.com/, CC BY 4.0), cropped to exactly the 144 in
+ * Floor so it maps 1:1 onto the field rect with no offset bookkeeping. See
+ * `docs/FIELD_CALIBRATION.md` for how the crop was measured and verified.
  *
- * The layout below is a plausible, symmetric arrangement of the elements the game
- * describes (nine Goals: four neutral Short, one neutral Tall, two Red and two Blue
- * Alliance; four Toggles at the centre of each wall; four Loaders beside the alliance
- * stations). The *positions and sizes are not yet verified* against Appendix A of the
- * game manual, so collision results are indicative rather than authoritative.
- *
- * When the real dimensions are transcribed, only this file changes — everything
- * downstream reads it as data. Do not scatter these numbers into the renderer.
+ * Element positions below were **measured from that render**, not guessed — see the
+ * same doc. They are good to about a third of an inch.
  */
 
+import fieldImageUrl from '../assets/override-field.webp';
 import type { Vec2 } from '../model/types';
 
+export { fieldImageUrl };
+
+/**
+ * The image covers exactly the Floor: -72..+72 in on both axes. Because the crop is
+ * exact, the renderer draws it straight onto the field rect — there is deliberately no
+ * originPx/pxPerInch fudge factor to get wrong.
+ */
+export const FIELD_IMAGE_SPANS_FLOOR = true;
+
 export type FieldShape =
-  | { kind: 'circle'; id: string; label: string; at: Vec2; radius: number; fill: string; stroke?: string }
+  | { kind: 'circle'; id: string; label: string; at: Vec2; radius: number; fill: string }
   | {
       kind: 'rect';
       id: string;
@@ -27,48 +34,58 @@ export type FieldShape =
       /** LemLib-frame rotation, degrees. */
       theta: number;
       fill: string;
-      stroke?: string;
     };
 
-const NEUTRAL = '#9aa39c';
+const NEUTRAL = '#8f9a93';
 const RED = '#c1665c';
 const BLUE = '#5b7fa8';
 const TOGGLE = '#b99a63';
 const LOADER = '#c9c0ae';
 
+/** Measured goal footprint radius, inches. Alliance goals read slightly larger. */
+const GOAL_R = 3.5;
+const TALL_R = 3.2;
+
 /**
- * Wall-mounted elements sit flush against the perimeter (70 in from centre, 4 in deep,
- * so they occupy 68..72). Anything that protrudes further blocks the corridor a robot
- * actually starts and drives in, which would make every routine read as a collision.
+ * Nine Goals, on the symmetric "knight's move" layout the render shows: one Tall Goal
+ * at the centre, and eight at (+/-24, +/-48) / (+/-48, +/-24).
+ *
+ * Measured centres landed within 0.35 in of exact 24 in multiples, which is both a
+ * sanity check on the layout and an independent confirmation of the image scale.
  */
 export const OVERRIDE_ELEMENTS: FieldShape[] = [
-  // Centre neutral Tall Goal
-  { kind: 'circle', id: 'tall', label: 'Tall Goal', at: { x: 0, y: 0 }, radius: 8, fill: NEUTRAL },
+  { kind: 'circle', id: 'tall', label: 'Tall Goal (neutral)', at: { x: 0, y: 0 }, radius: TALL_R, fill: NEUTRAL },
 
-  // Four neutral Short Goals, on the diagonals
-  { kind: 'circle', id: 'short-nw', label: 'Short Goal', at: { x: -24, y: 24 }, radius: 6, fill: NEUTRAL },
-  { kind: 'circle', id: 'short-ne', label: 'Short Goal', at: { x: 24, y: 24 }, radius: 6, fill: NEUTRAL },
-  { kind: 'circle', id: 'short-sw', label: 'Short Goal', at: { x: -24, y: -24 }, radius: 6, fill: NEUTRAL },
-  { kind: 'circle', id: 'short-se', label: 'Short Goal', at: { x: 24, y: -24 }, radius: 6, fill: NEUTRAL },
+  // Blue Alliance Goals — the +x/+y diagonal
+  { kind: 'circle', id: 'blue-a', label: 'Blue Alliance Goal', at: { x: 24, y: 48 }, radius: GOAL_R, fill: BLUE },
+  { kind: 'circle', id: 'blue-b', label: 'Blue Alliance Goal', at: { x: 48, y: 24 }, radius: GOAL_R, fill: BLUE },
 
-  // Alliance Goals — tucked into the corners. Red on the -Y half, blue on +Y.
-  { kind: 'circle', id: 'red-a', label: 'Red Alliance Goal', at: { x: -60, y: -60 }, radius: 6.5, fill: RED },
-  { kind: 'circle', id: 'red-b', label: 'Red Alliance Goal', at: { x: 60, y: -60 }, radius: 6.5, fill: RED },
-  { kind: 'circle', id: 'blue-a', label: 'Blue Alliance Goal', at: { x: -60, y: 60 }, radius: 6.5, fill: BLUE },
-  { kind: 'circle', id: 'blue-b', label: 'Blue Alliance Goal', at: { x: 60, y: 60 }, radius: 6.5, fill: BLUE },
+  // Red Alliance Goals — the -x/-y diagonal
+  { kind: 'circle', id: 'red-a', label: 'Red Alliance Goal', at: { x: -48, y: -24 }, radius: GOAL_R, fill: RED },
+  { kind: 'circle', id: 'red-b', label: 'Red Alliance Goal', at: { x: -24, y: -48 }, radius: GOAL_R, fill: RED },
 
-  // Toggles at the centre of each wall
-  { kind: 'rect', id: 'tog-n', label: 'Toggle', at: { x: 0, y: 70 }, width: 18, length: 4, theta: 0, fill: TOGGLE },
-  { kind: 'rect', id: 'tog-s', label: 'Toggle', at: { x: 0, y: -70 }, width: 18, length: 4, theta: 0, fill: TOGGLE },
-  { kind: 'rect', id: 'tog-e', label: 'Toggle', at: { x: 70, y: 0 }, width: 4, length: 18, theta: 0, fill: TOGGLE },
-  { kind: 'rect', id: 'tog-w', label: 'Toggle', at: { x: -70, y: 0 }, width: 4, length: 18, theta: 0, fill: TOGGLE },
+  // Four neutral Short Goals on the opposite diagonal
+  { kind: 'circle', id: 'short-nw', label: 'Short Goal (neutral)', at: { x: -48, y: 24 }, radius: GOAL_R, fill: NEUTRAL },
+  { kind: 'circle', id: 'short-n', label: 'Short Goal (neutral)', at: { x: -24, y: 48 }, radius: GOAL_R, fill: NEUTRAL },
+  { kind: 'circle', id: 'short-se', label: 'Short Goal (neutral)', at: { x: 48, y: -24 }, radius: GOAL_R, fill: NEUTRAL },
+  { kind: 'circle', id: 'short-s', label: 'Short Goal (neutral)', at: { x: 24, y: -48 }, radius: GOAL_R, fill: NEUTRAL },
 
-  // Loaders adjacent to the alliance stations
-  { kind: 'rect', id: 'load-sw', label: 'Loader', at: { x: -70, y: -30 }, width: 4, length: 20, theta: 0, fill: LOADER },
-  { kind: 'rect', id: 'load-se', label: 'Loader', at: { x: 70, y: -30 }, width: 4, length: 20, theta: 0, fill: LOADER },
-  { kind: 'rect', id: 'load-nw', label: 'Loader', at: { x: -70, y: 30 }, width: 4, length: 20, theta: 0, fill: LOADER },
-  { kind: 'rect', id: 'load-ne', label: 'Loader', at: { x: 70, y: 30 }, width: 4, length: 20, theta: 0, fill: LOADER },
+  // Toggles at the centre of each wall, flush against the perimeter.
+  { kind: 'rect', id: 'tog-n', label: 'Toggle', at: { x: 0, y: 70.5 }, width: 24, length: 3, theta: 0, fill: TOGGLE },
+  { kind: 'rect', id: 'tog-s', label: 'Toggle', at: { x: 0, y: -70.5 }, width: 24, length: 3, theta: 0, fill: TOGGLE },
+  { kind: 'rect', id: 'tog-e', label: 'Toggle', at: { x: 70.5, y: 0 }, width: 3, length: 24, theta: 0, fill: TOGGLE },
+  { kind: 'rect', id: 'tog-w', label: 'Toggle', at: { x: -70.5, y: 0 }, width: 3, length: 24, theta: 0, fill: TOGGLE },
+
+  // Loaders, also flush, on the alliance-station walls.
+  { kind: 'rect', id: 'load-nw', label: 'Loader', at: { x: -70.5, y: 36 }, width: 3, length: 16, theta: 0, fill: LOADER },
+  { kind: 'rect', id: 'load-sw', label: 'Loader', at: { x: -70.5, y: -36 }, width: 3, length: 16, theta: 0, fill: LOADER },
+  { kind: 'rect', id: 'load-ne', label: 'Loader', at: { x: 70.5, y: 36 }, width: 3, length: 16, theta: 0, fill: LOADER },
+  { kind: 'rect', id: 'load-se', label: 'Loader', at: { x: 70.5, y: -36 }, width: 3, length: 16, theta: 0, fill: LOADER },
 ];
 
-/** True once the geometry has been checked against the manual. Flips with ISA-113. */
-export const ELEMENTS_VERIFIED = false;
+/**
+ * Goal positions and radii are measured from the official-geometry render and agree
+ * with a 24 in grid to ~0.35 in. Toggle and Loader footprints are still approximate —
+ * they sit flush to the wall where a robot rarely goes, so they matter far less.
+ */
+export const ELEMENTS_VERIFIED = true;

@@ -1,10 +1,11 @@
 /**
  * Canvas rendering. PLAN.md §5.2, §7.2.
  *
- * The field is drawn procedurally rather than blitted from a render of the official
- * CAD — see ISA-112. Procedural has one real advantage worth keeping even after the
- * raster lands: it stays crisp at any zoom, and the tile grid lines up exactly with the
- * coordinate system instead of approximately.
+ * The field background is an orthographic top-down render cropped to exactly the 144 in
+ * Floor, so it maps straight onto the field rect with no offset arithmetic. The tile
+ * grid is still drawn procedurally *on top* of it: it stays crisp at any zoom, and
+ * because it is generated from FIELD_SIZE_IN it doubles as a live calibration check —
+ * if the drawn grid ever drifts off the render's tile seams, the mapping is wrong.
  *
  * Colour semantics: green for lateral motions, orange for angular, red for a segment
  * that collides or times out. Alliance colour tints the field only, never the path, so
@@ -12,7 +13,7 @@
  */
 
 import { FIELD_HALF_IN, TILE_IN } from '../config/field';
-import { OVERRIDE_ELEMENTS, type FieldShape } from '../config/overrideField';
+import { OVERRIDE_ELEMENTS, fieldImageUrl, type FieldShape } from '../config/overrideField';
 import { SEGMENT_FAMILY } from '../config/defaults';
 import {
   bezierAt,
@@ -30,10 +31,11 @@ const COL = {
   tileLine: '#d5cbb7',
   wall: '#4a4740',
   ink: '#292d29',
-  green: '#3f6b5b',
-  orange: '#bd6b3d',
-  red: '#b85349',
-  muted: '#a49f95',
+  // Brightened against the dark field render; the cream-UI values are too dim on it.
+  green: '#6fd3a8',
+  orange: '#f0a05a',
+  red: '#ff6b5c',
+  muted: '#c9c4ba',
   paper: '#fffdfa',
 };
 
@@ -46,6 +48,7 @@ export type RenderOptions = {
   showOnion: boolean;
   onionSpacing: number;
   showElements: boolean;
+  showGrid: boolean;
   hoverHandle: string | null;
 };
 
@@ -66,6 +69,26 @@ export function draw(ctx: CanvasRenderingContext2D, o: RenderOptions): void {
 
 // --- field ---------------------------------------------------------------------------
 
+/** The background render, loaded once and reused across frames. */
+let fieldImage: HTMLImageElement | null = null;
+let fieldImageReady = false;
+
+export function loadFieldImage(): Promise<void> {
+  if (fieldImage) return Promise.resolve();
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      fieldImageReady = true;
+      resolve();
+    };
+    // A missing background must not take the editor down with it — the grid, paths and
+    // coordinates are all still correct without it.
+    img.onerror = () => resolve();
+    img.src = fieldImageUrl;
+    fieldImage = img;
+  });
+}
+
 function drawField(ctx: CanvasRenderingContext2D, o: RenderOptions): void {
   const { view } = o;
   const tl = fieldToCanvas({ x: -FIELD_HALF_IN, y: FIELD_HALF_IN }, view);
@@ -79,45 +102,57 @@ function drawField(ctx: CanvasRenderingContext2D, o: RenderOptions): void {
   ctx.fillStyle = COL.tile;
   ctx.fillRect(0, 0, view.size, view.size);
 
-  // Foam tiles, in a subtle checker so the 24 in grid is readable without a hard grid.
-  const tiles = Math.round((FIELD_HALF_IN * 2) / TILE_IN);
-  const tilePx = span / tiles;
-  for (let r = 0; r < tiles; r++) {
-    for (let c = 0; c < tiles; c++) {
-      if ((r + c) % 2 === 0) continue;
-      ctx.fillStyle = COL.tileAlt;
-      ctx.fillRect(tl.x + c * tilePx, tl.y + r * tilePx, tilePx, tilePx);
+  if (fieldImageReady && fieldImage) {
+    // The crop covers exactly -72..+72, so this is a straight blit onto the field rect.
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(fieldImage, tl.x, tl.y, span, span);
+  } else {
+    // Fallback: the checkered foam tiles, so the editor is usable before the image
+    // lands (and if it never does).
+    const tiles = Math.round((FIELD_HALF_IN * 2) / TILE_IN);
+    const tilePx = span / tiles;
+    for (let r = 0; r < tiles; r++) {
+      for (let c = 0; c < tiles; c++) {
+        if ((r + c) % 2 === 0) continue;
+        ctx.fillStyle = COL.tileAlt;
+        ctx.fillRect(tl.x + c * tilePx, tl.y + r * tilePx, tilePx, tilePx);
+      }
     }
   }
 
-  // Alliance tint, on the field only.
-  const tint = o.routine.alliance === 'red' ? 'rgba(184,83,73,0.05)' : 'rgba(91,127,168,0.06)';
-  ctx.fillStyle = tint;
-  ctx.fillRect(tl.x, tl.y, span, span);
+  // Alliance colour as an inset rim rather than a wash. A full-field tint was fine over
+  // the pale procedural tiles but turns the photographic render muddy brown.
+  ctx.strokeStyle = o.routine.alliance === 'red' ? 'rgba(200,90,80,0.85)' : 'rgba(95,140,190,0.85)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(tl.x + 2, tl.y + 2, span - 4, span - 4);
 
-  ctx.strokeStyle = COL.tileLine;
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= tiles; i++) {
-    const p = tl.x + i * tilePx;
-    const q = tl.y + i * tilePx;
+  if (o.showGrid) {
+    const tiles = Math.round((FIELD_HALF_IN * 2) / TILE_IN);
+    const tilePx = span / tiles;
+    ctx.strokeStyle = fieldImageReady ? 'rgba(255,253,250,0.20)' : COL.tileLine;
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= tiles; i++) {
+      const p = tl.x + i * tilePx;
+      const q = tl.y + i * tilePx;
+      ctx.beginPath();
+      ctx.moveTo(p, tl.y);
+      ctx.lineTo(p, tl.y + span);
+      ctx.moveTo(tl.x, q);
+      ctx.lineTo(tl.x + span, q);
+      ctx.stroke();
+    }
+
+    // Origin crosshair — the field centre is (0, 0) in the LemLib frame.
+    const c = fieldToCanvas({ x: 0, y: 0 }, view);
+    ctx.strokeStyle = fieldImageReady ? 'rgba(255,253,250,0.45)' : 'rgba(41,45,41,0.22)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(p, tl.y);
-    ctx.lineTo(p, tl.y + span);
-    ctx.moveTo(tl.x, q);
-    ctx.lineTo(tl.x + span, q);
+    ctx.moveTo(c.x - 9, c.y);
+    ctx.lineTo(c.x + 9, c.y);
+    ctx.moveTo(c.x, c.y - 9);
+    ctx.lineTo(c.x, c.y + 9);
     ctx.stroke();
   }
-
-  // Origin crosshair — the field centre is (0, 0) in the LemLib frame.
-  const c = fieldToCanvas({ x: 0, y: 0 }, view);
-  ctx.strokeStyle = 'rgba(41,45,41,0.22)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(c.x - 9, c.y);
-  ctx.lineTo(c.x + 9, c.y);
-  ctx.moveTo(c.x, c.y - 9);
-  ctx.lineTo(c.x, c.y + 9);
-  ctx.stroke();
 
   ctx.strokeStyle = COL.wall;
   ctx.lineWidth = 3;
@@ -128,11 +163,15 @@ function drawField(ctx: CanvasRenderingContext2D, o: RenderOptions): void {
 function drawElements(ctx: CanvasRenderingContext2D, view: View, shapes: FieldShape[]): void {
   const s = pxPerInch(view);
   for (const el of shapes) {
+    // The background render already shows the real elements, so this overlay exists to
+    // make the *collision* geometry visible — outlines, not fills, so you can see how
+    // well the modelled shape matches what's underneath it.
     ctx.save();
-    ctx.globalAlpha = 0.85;
-    ctx.fillStyle = el.fill;
-    ctx.strokeStyle = 'rgba(41,45,41,0.25)';
-    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = 'rgba(0,0,0,0)';
+    ctx.strokeStyle = el.fill;
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 1.5;
     if (el.kind === 'circle') {
       const p = fieldToCanvas(el.at, view);
       ctx.beginPath();
@@ -213,7 +252,8 @@ function drawOnion(ctx: CanvasRenderingContext2D, o: RenderOptions): void {
   let last: Vec2 | null = null;
 
   ctx.save();
-  ctx.strokeStyle = 'rgba(41,45,41,0.14)';
+  // Light on the dark render — the previous near-black stroke was invisible on it.
+  ctx.strokeStyle = 'rgba(255,253,250,0.30)';
   ctx.lineWidth = 1;
   for (const p of trace.points) {
     if (last && Math.hypot(p.x - last.x, p.y - last.y) < o.onionSpacing) continue;
@@ -302,7 +342,7 @@ function drawHandles(ctx: CanvasRenderingContext2D, o: RenderOptions): void {
     }
 
     const family = seg ? SEGMENT_FAMILY[seg.kind] : 'lateral';
-    const colour = h.kind === 'start' ? COL.ink : family === 'angular' ? COL.orange : COL.green;
+    const colour = h.kind === 'start' ? COL.paper : family === 'angular' ? COL.orange : COL.green;
     const r = h.kind === 'control' ? 4 : selected ? 7 : 5.5;
 
     ctx.save();
@@ -357,7 +397,7 @@ function drawRobot(ctx: CanvasRenderingContext2D, o: RenderOptions): void {
   ctx.beginPath();
   ctx.moveTo(centre.x, centre.y);
   ctx.lineTo(nose.x, nose.y);
-  ctx.strokeStyle = collided ? COL.red : COL.ink;
+  ctx.strokeStyle = collided ? COL.red : COL.paper;
   ctx.lineWidth = 2.5;
   ctx.stroke();
   ctx.restore();

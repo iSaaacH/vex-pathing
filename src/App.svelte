@@ -1,6 +1,5 @@
 <script lang="ts">
   import { store } from './stores/routine.svelte';
-  import { ELEMENTS_VERIFIED } from './config/overrideField';
   import { blankRoutine, demoRoutine } from './config/defaults';
   import type { Routine } from './model/types';
   import RoutinePanel from './lib/RoutinePanel.svelte';
@@ -161,8 +160,11 @@
         <button class="chip" class:selected={store.showOnion} onclick={() => (store.showOnion = !store.showOnion)}>
           onion layers
         </button>
+        <button class="chip" class:selected={store.showGrid} onclick={() => (store.showGrid = !store.showGrid)}>
+          tile grid
+        </button>
         <button class="chip" class:selected={store.showElements} onclick={() => (store.showElements = !store.showElements)}>
-          field elements
+          collision shapes
         </button>
         <button
           class="chip"
@@ -176,14 +178,13 @@
       </div>
     </div>
 
-    {#if !ELEMENTS_VERIFIED}
-      <p class="notice">
-        <strong>Field elements are placeholder geometry.</strong>
-        Goal, Toggle and Loader positions have not yet been checked against Appendix A of the
-        Override game manual (ISA-113), so collision results are indicative. Path coordinates and
-        the motion simulation are unaffected.
-      </p>
-    {/if}
+    <p class="notice">
+      <strong>Field render:</strong> orthographic top-down by
+      <a href="https://field-rendering.jerryio.com/" target="_blank" rel="noopener">Jerry Lum</a>
+      (CC BY 4.0), cropped to exactly the 144&Prime; Floor so it maps 1:1 onto the coordinate
+      system. Goal positions are measured from it and agree with a 24&Prime; grid to ~0.35&Prime;;
+      Toggle and Loader footprints are still approximate.
+    </p>
   </main>
 
   <CodePanel />

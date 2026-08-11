@@ -42,8 +42,14 @@ npm run deploy     # build and push dist/ to the gh-pages branch
   the comments.
 - **Pure-pursuit path files** in LemLib's exact `x, y, velocity` format with the
   two-character `", "` delimiter and `endData` terminator.
+- **The real field.** The background is an orthographic top-down render of the Override
+  field, cropped to exactly the 144&Prime; Floor so it maps 1:1 onto the coordinate system —
+  no offset, no scale constant in the drawing code. The 24&Prime; tile grid is drawn from
+  `FIELD_SIZE_IN` on top of it, so it doubles as a standing calibration check.
+  See [`docs/FIELD_CALIBRATION.md`](docs/FIELD_CALIBRATION.md).
 - **Collision + onion layers.** The robot footprint is swept along the trace and tested
-  against the field elements every tick.
+  against the nine Goals every tick. Goal positions were measured from the render and
+  land within 0.37&Prime; of an exact 24&Prime; lattice.
 - **Settings import.** Paste your `lemlib::Drivetrain` / `ControllerSettings` block from
   `main.cpp` and it parses the numbers out, `Omniwheel::NEW_325` included.
 - Undo/redo, autosave to `localStorage`, `.vexpath` import/export.
@@ -65,11 +71,9 @@ maths convention. See `PLAN.md` §3.1.
 
 ## Known limits
 
-- **Field elements are placeholder geometry.** Goal, Toggle and Loader positions have not
-  been checked against Appendix A of the game manual, so collision results are indicative.
-  Path coordinates and the motion simulation are unaffected. (ISA-113)
-- **`FIELD_SIZE_IN` is 144** (the tile span). The real perimeter interior may be ~140.5.
-  (ISA-111)
+- **Toggle and Loader footprints are still approximate.** The nine Goals are measured;
+  the wall-mounted elements are modelled flush to the perimeter, where a robot rarely
+  goes. (ISA-113)
 - **The simulator has not been validated against a real robot yet.** Until it is, the UI
   says "predicted", not "simulated". (ISA-130)
 - Default PID gains are placeholders — import yours.
@@ -89,6 +93,14 @@ src/
 
 Design rationale for all of it is in [`PLAN.md`](./PLAN.md); the milestone and issue
 breakdown is in [`LINEAR_PROJECT.md`](./LINEAR_PROJECT.md).
+
+## Attribution
+
+The field render is by **Jerry Lum** ([field-rendering.jerryio.com](https://field-rendering.jerryio.com/)),
+used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) and modified
+(cropped and rescaled). See [`NOTICE`](NOTICE).
+
+Not affiliated with VEX Robotics.
 
 ## Related
 

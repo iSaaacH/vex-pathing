@@ -1,0 +1,21 @@
+VEX Pathing — third-party content notices
+=========================================
+
+Field background image
+----------------------
+File: src/assets/override-field.webp
+
+Derived from "V5RC Override — Head-to-Head, Top Down" by Jerry Lum,
+obtained from https://field-rendering.jerryio.com/ and used under the
+Creative Commons Attribution 4.0 International licence (CC BY 4.0):
+https://creativecommons.org/licenses/by/4.0/
+
+Changes made: the 4000x4000 source PNG was composited onto an opaque
+background, cropped to exactly the 144-inch Floor (3866 x 3866 px),
+resized to 2048 x 2048, and re-encoded as WebP. See
+docs/FIELD_CALIBRATION.md for the measurements behind the crop.
+
+VEX, V5RC and Override are trademarks of Innovation First, Inc. / VEX
+Robotics. This project is not affiliated with or endorsed by VEX Robotics.
+Game rules and field specifications referenced in the documentation come
+from the publicly published V5RC Override Game Manual.
