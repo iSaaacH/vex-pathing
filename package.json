@@ -13,11 +13,9 @@
     "deploy": "npm run build:fast && gh-pages -d dist"
   },
   "devDependencies": {
-    "@playwright/browser-chromium": "^1.62.1",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tsconfig/svelte": "^5.0.4",
     "gh-pages": "^6.3.0",
-    "playwright-core": "^1.62.1",
     "svelte": "^5.19.0",
     "svelte-check": "^4.1.4",
     "typescript": "^5.7.3",
