@@ -23,7 +23,6 @@
     "vitest": "^3.0.5"
   },
   "allowScripts": {
-    "esbuild@0.25.12": true,
-    "@playwright/browser-chromium@1.62.1": true
+    "esbuild@0.25.12": true
   }
 }
