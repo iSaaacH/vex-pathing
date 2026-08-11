@@ -2,7 +2,7 @@
 
 Mirror of the Linear project. Keep this in sync when issues move.
 
-**Status as of 2026-08-11:** M0–M4 are built and the app runs. 18 of 28 issues are Done;
+**Status as of 2026-08-11:** M0–M4 are built and the app runs. 17 of 28 issues are Done;
 the open ones are listed with what is actually left. See `docs/SIM_FINDINGS.md` for what
 the simulator port turned up.
 
