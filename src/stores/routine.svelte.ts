@@ -38,10 +38,20 @@ class Store {
   /** Playback head, seconds. */
   playhead = $state(0);
   playing = $state(false);
-  showOnion = $state(true);
+  /**
+   * The ghost-robot trail. Off by default: it is genuinely useful for spotting a corner
+   * clip, but a track full of robot outlines is not what you want to look at while
+   * building a route. One robot, on the playhead, is the default view.
+   */
+  showOnion = $state(false);
   onionSpacing = $state(6);
   showElements = $state(false);
   showGrid = $state(true);
+
+  /** Library id of the routine being edited, or null if it has never been saved. */
+  currentId = $state<string | null>(null);
+  /** True when the working document differs from what is in the library. */
+  dirty = $state(false);
 
   #undo: string[] = [];
   #redo: string[] = [];
@@ -87,6 +97,7 @@ class Store {
     }
     this.#lastKey = coalesceKey ?? null;
     fn(this.routine);
+    this.dirty = true;
     this.#scheduleSave();
   }
 
@@ -103,6 +114,7 @@ class Store {
     this.#redo.push(JSON.stringify(this.routine));
     this.routine = JSON.parse(prev) as Routine;
     this.#lastKey = null;
+    this.dirty = true;
     this.#scheduleSave();
   }
 
@@ -112,6 +124,7 @@ class Store {
     this.#undo.push(JSON.stringify(this.routine));
     this.routine = JSON.parse(next) as Routine;
     this.#lastKey = null;
+    this.dirty = true;
     this.#scheduleSave();
   }
 
@@ -169,12 +182,30 @@ class Store {
     });
   }
 
-  replace(routine: Routine): void {
+  /**
+   * Swap the whole document — loading from the library, opening a file, starting fresh.
+   * `id` is the library id it came from, or null if it isn't in the library.
+   */
+  replace(routine: Routine, id: string | null = null): void {
     this.edit(() => {});
     this.routine = routine;
     this.selectedId = null;
     this.playhead = 0;
+    this.playing = false;
+    this.currentId = id;
+    this.dirty = id === null;
     this.#scheduleSave();
+  }
+
+  markSaved(id: string): void {
+    this.currentId = id;
+    this.dirty = false;
+  }
+
+  /** The library copy went away; keep editing, but it is no longer backed by anything. */
+  markUnsaved(): void {
+    this.currentId = null;
+    this.dirty = true;
   }
 }
 

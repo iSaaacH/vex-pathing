@@ -1,14 +1,16 @@
 <script lang="ts">
   import { store } from './stores/routine.svelte';
-  import { blankRoutine, demoRoutine } from './config/defaults';
   import type { Routine } from './model/types';
   import RoutinePanel from './lib/RoutinePanel.svelte';
   import FieldCanvas from './lib/FieldCanvas.svelte';
   import CodePanel from './lib/CodePanel.svelte';
   import ExportDialog from './lib/ExportDialog.svelte';
+  import RoutinesDialog from './lib/RoutinesDialog.svelte';
+  import { newRoutineId, saveRoutine } from './stores/library';
   import SettingsDialog from './lib/SettingsDialog.svelte';
 
   let exportOpen = $state(false);
+  let routinesOpen = $state(false);
   let settingsOpen = $state(false);
   let toasts = $state<{ id: number; msg: string; ok: boolean }[]>([]);
   let toastId = 0;
@@ -63,18 +65,34 @@
       if (parsed.schemaVersion !== 1 || !Array.isArray(parsed.segments)) {
         throw new Error('not a .vexpath document');
       }
-      store.replace(parsed);
-      toast(`Loaded ${parsed.name}`);
+      store.replace(parsed, null);
+      toast(`Imported ${parsed.name}`);
     } catch (err) {
       toast(`Could not load: ${(err as Error).message}`, false);
     }
     (e.target as HTMLInputElement).value = '';
   }
 
+  /** Ctrl+S saves in place, or opens the dialog if this routine has no name yet. */
+  async function quickSave() {
+    if (!store.currentId) {
+      routinesOpen = true;
+      return;
+    }
+    await saveRoutine(store.currentId, store.routine);
+    store.markSaved(store.currentId);
+    toast(`Saved "${store.routine.name}"`);
+  }
+
   function onKeydown(e: KeyboardEvent) {
     const tag = (e.target as HTMLElement)?.tagName;
     const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
 
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      quickSave();
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       if (e.shiftKey) store.redo();
@@ -95,7 +113,15 @@
   const est = $derived(store.trace.duration.toFixed(1));
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window
+  onkeydown={onKeydown}
+  onbeforeunload={(e) => {
+    // The working document is autosaved to localStorage, so nothing is *lost* — but an
+    // unsaved routine won't be in the library, which is what people expect "saved" to
+    // mean. Only nag when there is something to lose.
+    if (store.dirty && store.routine.segments.length > 0) e.preventDefault();
+  }}
+/>
 
 <div class="shell">
   <header class="topbar">
@@ -124,7 +150,10 @@
     <div class="top-actions">
       <button class="button ghost" onclick={() => store.undo()} disabled={!store.canUndo} title="Undo (Ctrl+Z)">↶</button>
       <button class="button ghost" onclick={() => store.redo()} disabled={!store.canRedo} title="Redo (Ctrl+Shift+Z)">↷</button>
-      <button class="button ghost" onclick={openFile}>Open</button>
+      <button class="button ghost" onclick={() => (routinesOpen = true)}>
+        Routines{store.dirty ? ' •' : ''}
+      </button>
+      <button class="button ghost" onclick={openFile}>Import</button>
       <button class="button ghost" onclick={() => (settingsOpen = true)}>Robot</button>
       <button class="button dark" onclick={() => (exportOpen = true)}>Export</button>
     </div>
@@ -158,7 +187,7 @@
 
       <div class="toggles" style="margin-top:12px">
         <button class="chip" class:selected={store.showOnion} onclick={() => (store.showOnion = !store.showOnion)}>
-          onion layers
+          robot trail
         </button>
         <button class="chip" class:selected={store.showGrid} onclick={() => (store.showGrid = !store.showGrid)}>
           tile grid
@@ -173,8 +202,6 @@
         >
           {store.routine.alliance}
         </button>
-        <button class="chip" onclick={() => store.replace(demoRoutine())}>load demo</button>
-        <button class="chip" onclick={() => store.replace(blankRoutine())}>new</button>
       </div>
     </div>
 
@@ -198,6 +225,7 @@
   style="display:none"
 />
 
+<RoutinesDialog bind:open={routinesOpen} {toast} />
 <ExportDialog bind:open={exportOpen} {toast} />
 <SettingsDialog bind:open={settingsOpen} />
 

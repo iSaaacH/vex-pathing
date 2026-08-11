@@ -384,10 +384,16 @@ function drawRobot(ctx: CanvasRenderingContext2D, o: RenderOptions): void {
   ctx.beginPath();
   corners.forEach((c, i) => (i === 0 ? ctx.moveTo(c.x, c.y) : ctx.lineTo(c.x, c.y)));
   ctx.closePath();
-  ctx.fillStyle = collided ? 'rgba(184,83,73,0.25)' : 'rgba(41,45,41,0.12)';
+  // This is now the only robot on the field, so it has to read instantly against a busy
+  // dark render — light fill, light stroke, and a soft drop shadow to lift it off the
+  // foam. The previous near-black values were inherited from the pale procedural field.
+  ctx.fillStyle = collided ? 'rgba(255,107,92,0.34)' : 'rgba(255,253,250,0.26)';
+  ctx.strokeStyle = collided ? COL.red : COL.paper;
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = 'rgba(0,0,0,0.55)';
+  ctx.shadowBlur = 10;
   ctx.fill();
-  ctx.strokeStyle = collided ? COL.red : COL.ink;
-  ctx.lineWidth = 2;
+  ctx.shadowBlur = 0;
   ctx.stroke();
 
   // Nose marker, so the robot's facing is unambiguous at a glance.
