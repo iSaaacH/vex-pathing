@@ -2,7 +2,8 @@
 
 Mirror of the Linear project. Keep this in sync when issues move.
 
-**Status as of 2026-08-11:** M0–M4 are built and the app runs. 17 of 28 issues are Done;
+**Status as of 2026-08-11:** M0–M4 are built and **live at
+https://isaaach.github.io/vex-pathing/**. 21 of 28 issues are Done;
 the open ones are listed with what is actually left. See `docs/SIM_FINDINGS.md` for what
 the simulator port turned up.
 
@@ -113,6 +114,5 @@ description cites its section.
 | What | Who | Why |
 | --- | --- | --- |
 | `gh auth refresh -h github.com -s workflow` | Isaac (interactive) | Unblocks ISA-133 (and vex-scope ISA-101) |
-| Flip the repo to public | Isaac | GitHub Pages on a private repo needs a paid plan (ISA-110) |
 | Confirm 4613R's LemLib version from `project.pros` | Isaac | Blocks ISA-120 |
 | Field time on 4613R for three test motions | Isaac | Blocks ISA-130 |

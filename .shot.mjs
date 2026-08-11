@@ -16,7 +16,7 @@ const errors = [];
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', (e) => errors.push('PAGEERROR: ' + e.message));
 
-await page.goto('http://localhost:4319/vex-pathing/', { waitUntil: 'networkidle' });
+await page.goto('https://isaaach.github.io/vex-pathing/', { waitUntil: 'networkidle' });
 await page.waitForTimeout(900);
 
 const out = process.argv[2] || 'app.png';

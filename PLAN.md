@@ -5,9 +5,10 @@ A browser-based autonomous path planner and motion simulator for V5RC **Override
 the Pedro Pathing Visualizer's interaction model and VEX Live Tuning's cream/paper
 visual system, deployed as a static site on GitHub Pages.
 
-> Status: **plan only**. No code written yet. Everything below is research +
-> design decisions; the build order in §11 maps 1:1 onto the Linear milestones in
-> `LINEAR_PROJECT.md`.
+> Status: **M0–M4 built and live** at <https://isaaach.github.io/vex-pathing/>.
+> This document is the original research and design record; where the build diverged
+> from it, the divergence is noted inline. See `docs/SIM_FINDINGS.md` for what porting
+> LemLib actually turned up and `docs/FIELD_CALIBRATION.md` for the field image.
 
 ---
 
@@ -19,7 +20,7 @@ visual system, deployed as a static site on GitHub Pages.
 | Who is it for? | 4613R (and anyone else running LemLib). Auton design moves off graph paper and out of "drive it, guess, re-flash" |
 | Target library | **LemLib v0.5.6** (latest stable, 2025-06-18). The `master` v1.0 rewrite is *not* the target — see §3.6 |
 | Coordinate system | LemLib native: origin at field **centre**, inches, **0° = +Y (up), clockwise-positive**. Range −72…+72 |
-| Field | Override 2026–27, rendered top-down from the official VEX field CAD (§5) |
+| Field | Override 2026–27. **Built:** a CC BY 4.0 orthographic render cropped to exactly the 144″ Floor, not a CAD import — see `docs/FIELD_CALIBRATION.md` |
 | Interaction model | Pedro Pathing Visualizer: waypoint list ⇄ draggable canvas ⇄ live-generated code (§2) |
 | Visual system | The VEX Live Tuning cream/paper palette, lifted token-for-token (§7) |
 | Simulation | Actual TS ports of LemLib's PID, exit conditions, boomerang carrot and pure pursuit — not a spline animation (§4) |
