@@ -2,10 +2,16 @@
 
 Mirror of the Linear project. Keep this in sync when issues move.
 
-**Status as of 2026-08-11:** M0–M4 are built and **live at
+**Status as of 2026-08-18:** M0–M4 are built and **live at
 https://isaaach.github.io/vex-pathing/**. 21 of 28 issues are Done;
 the open ones are listed with what is actually left. See `docs/SIM_FINDINGS.md` for what
 the simulator port turned up.
+
+> Reconciled against Linear on 2026-08-18 by walking the tree. Four rows here were
+> stale — ISA-110, ISA-112, ISA-113 and ISA-119 had all landed and were still marked
+> pending. One row was wrong the other way: **ISA-111 was marked Done in Linear while
+> `src/config/field.ts` still carries its `TODO(ISA-111)`**, so it has been reopened.
+> When these disagree, check the tree — neither side is automatically right.
 
 - **Workspace**: Isaac Hronopoulos
 - **Team**: RedbacksVEX2026 (`ISA`)
@@ -29,7 +35,7 @@ description cites its section.
 | ✅ ISA-107 | Scaffold Vite + Svelte 5 + TypeScript project | Done. Vite 6, Svelte 5 runes, strict TS, Vitest |
 | ✅ ISA-108 | Port the VEX Live Tuning cream/paper design tokens | Done. Token-for-token in `src/styles/app.css` |
 | ✅ ISA-109 | Three-pane app shell (routine / field / generated code) | Done, with the &lt;1000px / &lt;720px breakpoints |
-| ⏳ ISA-110 | GitHub Pages branch deploy + base path | Code done (`base`, `npm run deploy`). **Blocked: repo must go public, then run deploy** |
+| ✅ ISA-110 | GitHub Pages branch deploy + base path | Done. `base` set, `npm run deploy` wired to `gh-pages -d dist`, site live |
 
 ## M1 — Field & coordinates
 
@@ -39,9 +45,9 @@ description cites its section.
 
 | # | Title | Status |
 | --- | --- | --- |
-| ⏳ ISA-111 | Pin `FIELD_SIZE_IN` against the Override game manual | **High.** Still 144. Isolated in `config/field.ts`; nothing else inlines it, so it's a one-line fix |
-| ⏳ ISA-112 | Produce the Override top-down field render from official CAD | Not started. Field is drawn procedurally, which unblocked everything as planned |
-| ⏳ ISA-113 | Author `override-elements.json` collision geometry | Placeholder geometry in `config/overrideField.ts`; `ELEMENTS_VERIFIED = false` drives a UI banner |
+| ⏳ ISA-111 | Pin `FIELD_SIZE_IN` against the Override game manual | **High. Reopened 2026-08-18** — was closed in Linear, but `config/field.ts` still reads 144 with its `TODO(ISA-111)` intact. 144 is the *tile span*; the perimeter *interior* is historically ~140.5 in. Nothing else inlines it, so it stays a one-line fix |
+| ✅ ISA-112 | Produce the Override top-down field render from official CAD | Done. `src/assets/override-field.webp`, scale-verified against the official geometry |
+| ✅ ISA-113 | Author `override-elements.json` collision geometry | Done. `ELEMENTS_VERIFIED = true` — goals agree with a 24 in grid to ~0.35 in. Toggle/Loader footprints still approximate, but they sit flush to the wall |
 | ✅ ISA-114 | Field ⇄ canvas transform in the LemLib frame | Done + tested. 0° = +Y, CW-positive |
 | ✅ ISA-115 | Canvas pan / zoom / grid and live coordinate readout | Done. Cursor-anchored zoom, shift-snap |
 
@@ -55,7 +61,7 @@ description cites its section.
 | ✅ ISA-116 | Routine document model and types | Done. Nine kinds, exactly LemLib's motions |
 | ✅ ISA-117 | Segment list with per-kind inspectors | Done. Params behind a disclosure, markers inline |
 | ✅ ISA-118 | Draggable waypoints and heading arms on the canvas | Done. Verified drag → list → code → undo in a headless browser |
-| ⏳ ISA-119 | Undo/redo, autosave, and named routine storage | Undo/redo + autosave + `.vexpath` done. **IndexedDB named routines outstanding** |
+| ✅ ISA-119 | Undo/redo, autosave, and named routine storage | Done. Undo/redo + autosave + `.vexpath`, and the named routine library in `src/stores/library.ts` |
 
 ## M3 — Code generation
 
@@ -116,3 +122,7 @@ description cites its section.
 | `gh auth refresh -h github.com -s workflow` | Isaac (interactive) | Unblocks ISA-133 (and vex-scope ISA-101) |
 | Confirm 4613R's LemLib version from `project.pros` | Isaac | Blocks ISA-120 |
 | Field time on 4613R for three test motions | Isaac | Blocks ISA-130 |
+| Read Appendix A and cite the field interior dimension | Isaac | Blocks ISA-111 (reopened 2026-08-18) |
+
+4613R has since migrated to LemLib as its only drive stack, so the ISA-120 version
+question is now answerable from `4613R-2026/project.pros` directly.
